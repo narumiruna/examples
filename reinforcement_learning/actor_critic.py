@@ -34,15 +34,16 @@ SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(4, 128)
-        self.action_head = nn.Linear(128, 2)
-        self.value_head = nn.Linear(128, 1)
+        self.affine1 = nn.Linear(4, 128, bias=False)
+        self.action_head = nn.Linear(128, 2, bias=False)
+        self.value_head = nn.Linear(128, 1, bias=False)
 
         self.saved_actions = []
         self.rewards = []
 
     def forward(self, x):
-        x = F.relu(self.affine1(x))
+        x = self.affine1(x)
+        x = F.selu(x - x.mean(), inplace=True)
         action_scores = self.action_head(x)
         state_values = self.value_head(x)
         return F.softmax(action_scores, dim=-1), state_values
